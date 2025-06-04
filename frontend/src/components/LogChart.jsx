@@ -10,15 +10,15 @@ const data = [
 
 export default function LogChart() {
   return (
-    <div className="bg-white p-4 rounded shadow h-64">
-      <h3 className="text-lg font-semibold mb-2">Log Volume Over Time</h3>
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow h-64">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Log Volume Over Time</h3>
+      <ResponsiveContainer width="40%" height="80%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="time" />
           <YAxis />
           <Tooltip />
-          <Line type="monotone" dataKey="logs" stroke="#8884d8" />
+          <Line type="monotone" dataKey="logs" stroke="#22d3ee" />
         </LineChart>
       </ResponsiveContainer>
     </div>
