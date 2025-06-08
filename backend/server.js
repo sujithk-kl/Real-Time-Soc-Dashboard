@@ -1,42 +1,25 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const { spawn } = require('child_process');
+const streamWindowsLogs = require('./logReader');
 const cors = require('cors');
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: '*'
-  }
-});
-
 app.use(cors());
 
-io.on('connection', (socket) => {
-  console.log('Client connected');
+const server = http.createServer(app);
 
-  // Tail system log in real-time
-  const tail = spawn('tail', ['-F', '/var/log/syslog']); // or '/var/log/auth.log', etc.
-
-  tail.stdout.on('data', (data) => {
-    const lines = data.toString().split('\n').filter(line => line.trim() !== '');
-    lines.forEach(line => {
-      socket.emit('newLog', {
-        timestamp: new Date().toLocaleTimeString(),
-        message: line
-      });
-    });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-    tail.kill(); // Stop tailing when client disconnects
-  });
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  },
 });
 
-const PORT = 5000;
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  streamWindowsLogs(socket);
+});
+
+server.listen(4000, () => {
+  console.log('Server listening on http://localhost:4000');
 });
