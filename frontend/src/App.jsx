@@ -1,15 +1,21 @@
-import DarkModeToggle from './components/DarkModeToggle'
-import Dashboard from './pages/Dashboard'
+import React from "react";
+import LiveLogTable from "./components/LiveLogTable";
+import ThreatMap from "./components/ThreatMap";
+import LogChart from "./components/LogChart";
 
 function App() {
   return (
-    <div className="min-h-screen w-full bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
-      <div className="flex justify-end mb-4">
-        <DarkModeToggle />
-      </div>
-      <Dashboard />
+    <div className="p-4 space-y-6">
+      <h1 className="text-xl font-semibold">live log feed</h1>
+      <LiveLogTable />
+      
+      <h1 className="text-xl font-semibold">Threat Map</h1>
+      <ThreatMap />
+
+      <h1 className="text-xl font-semibold">Log Volume Over Time</h1>
+      <LogChart />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

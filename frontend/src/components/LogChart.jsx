@@ -1,26 +1,37 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import React, { useEffect, useState } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from "recharts";
+import axios from "axios";
 
-const data = [
-  { time: '00:00', logs: 10 },
-  { time: '01:00', logs: 20 },
-  { time: '02:00', logs: 15 },
-  { time: '03:00', logs: 30 },
-  { time: '04:00', logs: 25 },
-]
+const LogChart = () => {
+  const [chartData, setChartData] = useState([]);
 
-export default function LogChart() {
+  useEffect(() => {
+    axios.get("http://localhost:4000/api/logs")
+      .then((response) => {
+        console.log("Fetched chart data:", response.data);
+        setChartData(response.data);
+      })
+      .catch((error) => {
+        console.error("Failed to load chart data:", error);
+      });
+  }, []);
+
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow h-64">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Log Volume Over Time</h3>
-      <ResponsiveContainer width="40%" height="80%">
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="time" />
-          <YAxis />
+    <div className="w-full h-[300px] bg-gray-900 rounded-xl shadow-md p-4">
+      <h2 className="text-white text-lg font-bold mb-4">Log Volume Over Time</h2>
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartData}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+          <XAxis dataKey="time" stroke="#ccc" />
+          <YAxis stroke="#ccc" />
           <Tooltip />
-          <Line type="monotone" dataKey="logs" stroke="#22d3ee" />
+          <Line type="monotone" dataKey="count" stroke="#00f2ff" strokeWidth={2} />
         </LineChart>
       </ResponsiveContainer>
     </div>
-  )
-}
+  );
+};
+
+export default LogChart;

@@ -2,12 +2,22 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 
-// Get powershell command path based on OS
 function getPowerShellCommand() {
   if (os.platform() === 'win32') {
     return path.join(process.env.WINDIR, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   } else {
     return 'pwsh';
+  }
+}
+
+function mapSeverity(level) {
+  switch (level) {
+    case 1: return 'Critical';
+    case 2: return 'Error';
+    case 3: return 'Warning';
+    case 4: return 'Information';
+    case 5: return 'Verbose';
+    default: return 'Unknown';
   }
 }
 
@@ -22,14 +32,14 @@ function streamWindowsLogs(socket) {
         $events = Get-WinEvent -LogName Application -MaxEvents 5 |
           ForEach-Object {
             [PSCustomObject]@{
-              TimeCreated = $_.TimeCreated
+              TimeCreated = $_.TimeCreated.ToUniversalTime().ToString("o")
               Message = $_.Message
+              Level = $_.Level
             }
           } | ConvertTo-Json -Compress
 
         Write-Output $events
-      }
-      catch {
+      } catch {
         Write-Output ("Error fetching logs: " + $_.Exception.Message)
       }
       Start-Sleep -Seconds 5
@@ -42,20 +52,26 @@ function streamWindowsLogs(socket) {
   powershell.stdout.on('data', (data) => {
     buffer += data.toString();
 
-    try {
-      const parsedLogs = JSON.parse(buffer);
-      const logs = Array.isArray(parsedLogs) ? parsedLogs : [parsedLogs];
+    if (buffer.trim().endsWith(']') || buffer.trim().startsWith('{')) {
+      try {
+        const parsedLogs = JSON.parse(buffer);
+        const logs = Array.isArray(parsedLogs) ? parsedLogs : [parsedLogs];
 
-      logs.forEach(log => {
-        socket.emit('newLog', {
-          timestamp: new Date(log.TimeCreated).toLocaleTimeString(),
-          message: log.Message?.trim() || 'No message',
+        logs.forEach(log => {
+          const timestamp = new Date(log.TimeCreated);
+          const [date, time] = timestamp.toLocaleString().split(', ');
+          socket.emit('newLog', {
+            date: date || '',
+            time: time || '',
+            severity: mapSeverity(log.Level),
+            message: log.Message?.trim() || 'No message',
+          });
         });
-      });
 
-      buffer = '';
-    } catch (err) {
-      // Wait for more data if JSON incomplete
+        buffer = '';
+      } catch {
+        // wait for more data
+      }
     }
   });
 
@@ -67,4 +83,5 @@ function streamWindowsLogs(socket) {
     console.log(`PowerShell exited with code ${code}`);
   });
 }
+
 module.exports = streamWindowsLogs;
